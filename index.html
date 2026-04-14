@@ -103,8 +103,8 @@
     .cookie-price small{font-size:12px;color:var(--muted);font-weight:300;}
 
     /* Bouton ajouter — etat initial */
-    .add-btn{height:38px;border-radius:30px;background:var(--brown);color:var(--cream);border:none;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 18px;transition:all .25s;flex-shrink:0;letter-spacing:.3px;white-space:nowrap;}
-    .add-btn:hover{background:var(--caramel);transform:translateY(-1px);box-shadow:0 4px 14px rgba(192,119,58,.3);}
+    .add-btn{width:38px;height:38px;border-radius:50%;background:var(--brown);color:var(--cream);border:none;font-size:22px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .25s;flex-shrink:0;line-height:1;}
+    .add-btn:hover{background:var(--caramel);transform:scale(1.1);box-shadow:0 4px 14px rgba(192,119,58,.3);}
     /* Controles quantite inline sur la carte */
     .card-qty{display:flex;align-items:center;flex-shrink:0;background:var(--warm);border:1.5px solid var(--caramel);border-radius:30px;overflow:hidden;height:38px;}
     .card-qty-btn{width:36px;height:36px;border:none;background:transparent;color:var(--caramel);font-size:19px;font-weight:400;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;flex-shrink:0;line-height:1;}
@@ -405,7 +405,7 @@
       .cookie-desc{font-size:12px;}
       .cookie-card-bot{padding:14px 16px;}
       .cookie-price{font-size:16px;}
-      .add-btn{font-size:12px;padding:0 12px;height:34px;}
+      .add-btn{width:34px;height:34px;font-size:20px;}
       .card-qty{height:34px;}
       .card-qty-btn{width:32px;height:32px;font-size:17px;}
       .card-qty-num{font-size:13px;min-width:22px;}
@@ -779,7 +779,7 @@ function getQtyInCart(id){return cart.filter(c=>c.id===id).length;}
 
 function cardControlHTML(c, qty){
   if(qty===0){
-    return `<button class="add-btn" onclick="cardAdd(${c.id})" aria-label="Ajouter au panier">Ajouter au panier</button>`;
+    return `<button class="add-btn" onclick="cardAdd(${c.id})" aria-label="Ajouter au panier">+</button>`;
   }
   return `<div class="card-qty" id="cqty-${c.id}">
     <button class="card-qty-btn minus" onclick="cardDec(${c.id})" aria-label="Retirer un">&#8722;</button>
