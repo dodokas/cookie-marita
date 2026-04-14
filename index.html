@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CookieDrop — Cookies Artisanaux</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <!-- Stripe.js — NE PAS supprimer -->
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    :root {
+      --cream:#FAF6EF; --warm:#F2EAD8; --brown:#3B2214; --caramel:#C0773A;
+      --gold:#D4A853; --blush:#E8C9A0; --muted:#7A6455; --white:#FFFFFF;
+      --border:rgba(192,119,58,0.15); --red:#c0392b; --green:#27ae60;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--brown);overflow-x:hidden;}
+    a{color:inherit;text-decoration:none;}
+
+    /* NAV */
+    #navbar{position:fixed;top:0;left:0;right:0;z-index:200;height:64px;padding:0 56px;display:flex;align-items:center;justify-content:space-between;background:rgba(250,246,239,0.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);transition:box-shadow .3s;}
+    #navbar.scrolled{box-shadow:0 2px 24px rgba(59,34,20,.09);}
+    .nav-logo{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;}
+    .nav-logo em{font-style:italic;color:var(--caramel);}
+    .nav-links{display:flex;gap:34px;list-style:none;}
+    .nav-links a{font-size:12px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);transition:color .2s;}
+    .nav-links a:hover{color:var(--brown);}
+    .cart-btn{display:flex;align-items:center;gap:8px;background:var(--brown);color:var(--cream);border:none;border-radius:30px;padding:9px 22px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background .2s,transform .15s;}
+    .cart-btn:hover{background:var(--caramel);transform:translateY(-1px);}
+    .cart-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+    /* HERO */
+    .hero{min-height:100vh;padding:120px 56px 80px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;position:relative;overflow:hidden;}
+    .hero-watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:clamp(120px,20vw,300px);font-weight:700;color:rgba(192,119,58,.04);pointer-events:none;user-select:none;white-space:nowrap;letter-spacing:-6px;}
+    .hero-content{position:relative;z-index:2;animation:fadeUp .8s ease both;}
+    .hero-eyebrow{font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--caramel);margin-bottom:24px;display:flex;align-items:center;gap:12px;}
+    .hero-eyebrow::after{content:'';width:40px;height:1px;background:var(--caramel);opacity:.4;}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(42px,5.5vw,72px);font-weight:700;line-height:1.07;margin-bottom:28px;}
+    .hero h1 em{font-style:italic;color:var(--caramel);}
+    .hero-desc{font-size:17px;font-weight:300;color:var(--muted);line-height:1.8;max-width:420px;margin-bottom:44px;}
+    .hero-actions{display:flex;gap:14px;flex-wrap:wrap;}
+    .hero-right{position:relative;z-index:2;display:flex;flex-direction:column;gap:20px;animation:fadeUp .8s .15s ease both;}
+    .hero-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .hero-stat{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:28px 24px;}
+    .hero-stat-num{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;color:var(--caramel);line-height:1;}
+    .hero-stat-label{font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:6px;}
+    .hero-tagline{background:var(--brown);color:var(--cream);border-radius:18px;padding:28px 30px;font-family:'Playfair Display',serif;font-size:21px;font-style:italic;line-height:1.45;}
+    .hero-tagline strong{font-style:normal;font-size:11px;font-family:'DM Sans',sans-serif;letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:10px;opacity:.45;font-weight:500;}
+
+    /* BUTTONS */
+    .btn-primary{background:var(--brown);color:var(--cream);border:none;border-radius:40px;padding:13px 30px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;letter-spacing:.4px;transition:all .2s;}
+    .btn-primary:hover{background:var(--caramel);transform:translateY(-2px);box-shadow:0 6px 20px rgba(192,119,58,.3);}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+    .btn-outline{background:transparent;color:var(--brown);border:1.5px solid var(--brown);border-radius:40px;padding:12px 30px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;}
+    .btn-outline:hover{background:var(--warm);transform:translateY(-2px);}
+
+    /* TICKER */
+    .ticker{background:var(--brown);padding:11px 0;overflow:hidden;white-space:nowrap;}
+    .ticker-inner{display:inline-flex;animation:ticker 28s linear infinite;}
+    .ticker-item{font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:rgba(250,246,239,.75);padding:0 36px;}
+    .ticker-sep{color:var(--gold);opacity:.5;padding:0 4px;}
+
+    /* SECTIONS */
+    section{padding:100px 56px;}
+    .section-label{font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--caramel);margin-bottom:14px;}
+    .section-title{font-family:'Playfair Display',serif;font-size:clamp(30px,3.5vw,50px);font-weight:700;line-height:1.15;}
+    .section-title em{font-style:italic;color:var(--caramel);}
+    .section-sub{font-size:15px;color:var(--muted);font-weight:300;line-height:1.7;margin-top:14px;}
+    .section-hc{text-align:center;margin-bottom:60px;}
+
+    /* À PROPOS */
+    #apropos{background:var(--warm);}
+    .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:1100px;margin:0 auto;}
+    .about-left h2{font-family:'Playfair Display',serif;font-size:clamp(28px,3vw,44px);font-weight:700;line-height:1.2;margin-bottom:28px;}
+    .about-left h2 em{font-style:italic;color:var(--caramel);}
+    .about-left p{font-size:15px;color:var(--muted);line-height:1.85;font-weight:300;margin-bottom:18px;}
+    .about-values{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:32px;}
+    .about-value{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px 18px;}
+    .about-value-title{font-size:14px;font-weight:500;margin-bottom:5px;}
+    .about-value-text{font-size:13px;color:var(--muted);font-weight:300;line-height:1.6;}
+    .about-right{display:flex;flex-direction:column;gap:18px;}
+    .about-quote{background:var(--brown);color:var(--cream);border-radius:20px;padding:38px 34px;}
+    .about-quote blockquote{font-family:'Playfair Display',serif;font-size:21px;font-style:italic;line-height:1.55;margin-bottom:16px;}
+    .about-quote cite{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);font-style:normal;}
+    .about-numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+    .about-num-item{background:var(--white);padding:22px 12px;text-align:center;}
+    .about-num{font-family:'Playfair Display',serif;font-size:34px;font-weight:700;color:var(--caramel);line-height:1;}
+    .about-num-lbl{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:5px;}
+
+    /* COOKIES */
+    #cookies{background:var(--white);}
+    .filter-bar{display:flex;gap:10px;margin-bottom:50px;flex-wrap:wrap;}
+    .filter-btn{padding:8px 22px;border-radius:30px;border:1.5px solid var(--blush);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;}
+    .filter-btn.active,.filter-btn:hover{background:var(--brown);color:var(--cream);border-color:var(--brown);}
+    .cookies-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px;}
+    .cookie-card{background:var(--cream);border:1px solid var(--border);border-radius:20px;overflow:hidden;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+    .cookie-card:hover{transform:translateY(-5px);box-shadow:0 14px 40px rgba(59,34,20,.1);border-color:var(--blush);}
+    .cookie-card-top{padding:32px 24px 24px;border-bottom:1px solid var(--border);background:var(--warm);}
+    .cookie-letter{font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:var(--blush);line-height:1;margin-bottom:16px;user-select:none;}
+    .cookie-name{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;margin-bottom:8px;}
+    .cookie-desc{font-size:13px;color:var(--muted);font-weight:300;line-height:1.6;}
+    .cookie-card-bot{padding:20px 24px;display:flex;align-items:center;justify-content:space-between;}
+    .cookie-price{font-size:20px;font-weight:500;}
+    .cookie-price small{font-size:12px;color:var(--muted);font-weight:300;}
+
+    /* Bouton ajouter — etat initial */
+    .add-btn{height:38px;border-radius:30px;background:var(--brown);color:var(--cream);border:none;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 18px;transition:all .25s;flex-shrink:0;letter-spacing:.3px;white-space:nowrap;}
+    .add-btn:hover{background:var(--caramel);transform:translateY(-1px);box-shadow:0 4px 14px rgba(192,119,58,.3);}
+    /* Controles quantite inline sur la carte */
+    .card-qty{display:flex;align-items:center;flex-shrink:0;background:var(--warm);border:1.5px solid var(--caramel);border-radius:30px;overflow:hidden;height:38px;}
+    .card-qty-btn{width:36px;height:36px;border:none;background:transparent;color:var(--caramel);font-size:19px;font-weight:400;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;flex-shrink:0;line-height:1;}
+    .card-qty-btn:hover{background:var(--caramel);color:var(--cream);}
+    .card-qty-btn.minus:hover{background:#c0392b;color:#fff;}
+    .card-qty-num{font-size:14px;font-weight:600;color:var(--brown);min-width:26px;text-align:center;pointer-events:none;}
+
+    /* LIVRAISON */
+    #livraison{background:var(--cream);}
+    .livraison-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:0 auto;}
+    .livraison-card{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:36px 28px;transition:all .25s;}
+    .livraison-card:hover{border-color:var(--blush);box-shadow:0 8px 28px rgba(59,34,20,.07);}
+    .livraison-icon{width:48px;height:48px;background:var(--warm);border-radius:14px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;}
+    .livraison-icon svg{width:22px;height:22px;stroke:var(--caramel);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    .livraison-title{font-size:16px;font-weight:500;margin-bottom:10px;}
+    .livraison-desc{font-size:14px;color:var(--muted);font-weight:300;line-height:1.7;}
+    .livraison-price{font-size:22px;font-weight:500;color:var(--caramel);margin-top:16px;}
+    .livraison-price small{font-size:12px;color:var(--muted);}
+
+    /* ADRESSES */
+    #adresses{background:var(--warm);}
+    .adresses-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;max-width:1000px;margin:0 auto;}
+    .adresse-card{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:32px;transition:all .25s;}
+    .adresse-card:hover{border-color:var(--blush);box-shadow:0 8px 28px rgba(59,34,20,.07);}
+    .adresse-num{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;color:var(--blush);line-height:1;margin-bottom:14px;}
+    .adresse-name{font-size:16px;font-weight:500;margin-bottom:8px;}
+    .adresse-addr{font-size:14px;color:var(--muted);font-weight:300;line-height:1.7;margin-bottom:18px;}
+    .adresse-hours{font-size:12px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--caramel);padding-top:18px;border-top:1px solid var(--warm);}
+
+    /* CONTACT */
+    #contact{background:var(--white);}
+    .contact-wrap{display:grid;grid-template-columns:1fr 1.3fr;gap:80px;align-items:start;max-width:1000px;margin:0 auto;}
+    .contact-info h2{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;line-height:1.2;margin-bottom:20px;}
+    .contact-info h2 em{font-style:italic;color:var(--caramel);}
+    .contact-info p{font-size:15px;color:var(--muted);font-weight:300;line-height:1.8;margin-bottom:32px;}
+    .c-label{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--caramel);}
+    .c-val{font-size:15px;margin-top:2px;margin-bottom:14px;}
+    .form-g{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+    .form-g label{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+    .form-g input,.form-g textarea,.form-g select{background:var(--cream);border:1.5px solid var(--blush);border-radius:10px;padding:12px 16px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--brown);outline:none;transition:border-color .2s;width:100%;}
+    .form-g input:focus,.form-g textarea:focus,.form-g select:focus{border-color:var(--caramel);}
+    .form-g textarea{min-height:110px;resize:vertical;}
+    .form-row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+    /* CART DRAWER */
+    .cart-overlay{position:fixed;inset:0;background:rgba(59,34,20,.35);z-index:300;opacity:0;pointer-events:none;transition:opacity .3s;}
+    .cart-overlay.open{opacity:1;pointer-events:all;}
+    .cart-drawer{position:fixed;top:0;right:0;bottom:0;width:420px;max-width:100%;background:var(--white);z-index:301;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);box-shadow:-8px 0 40px rgba(59,34,20,.12);}
+    .cart-drawer.open{transform:translateX(0);}
+    .cart-head{padding:24px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .cart-head h3{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;}
+    .cart-close{background:var(--cream);border:none;cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+    .cart-close:hover{background:var(--warm);}
+    .cart-close svg{width:15px;height:15px;stroke:var(--brown);fill:none;stroke-width:2;stroke-linecap:round;}
+    .cart-items{flex:1;overflow-y:auto;padding:20px 28px;display:flex;flex-direction:column;gap:12px;}
+    .cart-empty{text-align:center;margin:auto;color:var(--muted);font-size:14px;font-weight:300;line-height:1.7;}
+    .cart-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--cream);border-radius:14px;border:1px solid var(--border);transition:border-color .2s;}
+    .cart-item:hover{border-color:var(--blush);}
+    .cart-item-init{width:40px;height:40px;background:var(--warm);border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--blush);}
+    .cart-item-info{flex:1;min-width:0;}
+    .cart-item-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .cart-item-unit-price{font-size:12px;color:var(--muted);margin-top:1px;}
+    /* Contrôles quantité */
+    .qty-controls{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+    .qty-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--blush);background:var(--white);color:var(--brown);font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .18s;flex-shrink:0;}
+    .qty-btn:hover{border-color:var(--caramel);background:var(--warm);}
+    .qty-btn.remove{border-color:rgba(192,119,58,.3);color:var(--muted);}
+    .qty-btn.remove:hover{border-color:#c0392b;color:#c0392b;background:#fef2f2;}
+    .qty-num{font-size:15px;font-weight:500;color:var(--brown);min-width:20px;text-align:center;}
+    .cart-item-subtotal{font-size:13px;font-weight:500;color:var(--brown);min-width:44px;text-align:right;flex-shrink:0;}
+
+    /* Badge panier animé */
+    .cart-badge{position:absolute;top:-6px;right:-6px;background:var(--caramel);color:var(--cream);font-size:11px;font-weight:700;min-width:18px;height:18px;border-radius:20px;display:flex;align-items:center;justify-content:center;padding:0 4px;pointer-events:none;transform:scale(0);transition:transform .25s cubic-bezier(.34,1.56,.64,1);}
+    .cart-badge.visible{transform:scale(1);}
+    .cart-badge.bump{animation:bump .3s cubic-bezier(.34,1.56,.64,1);}
+    @keyframes bump{0%{transform:scale(1)}50%{transform:scale(1.4)}100%{transform:scale(1)}}
+    .cart-btn-wrap{position:relative;}
+    .cart-foot{padding:20px 28px;border-top:1px solid var(--border);flex-shrink:0;}
+    .cart-tot-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+    .cart-tot-lbl{font-size:13px;color:var(--muted);}
+    .cart-tot-val{font-size:17px;font-weight:500;}
+    .cart-liv-note{font-size:12px;color:var(--caramel);margin-bottom:18px;}
+
+    /* ═══════════════════════════════════
+       PAYMENT MODAL — Section principale
+       ═══════════════════════════════════ */
+    .modal-overlay{position:fixed;inset:0;background:rgba(59,34,20,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s;}
+    .modal-overlay.open{opacity:1;pointer-events:all;}
+    .modal{background:var(--white);border-radius:24px;width:520px;max-width:100%;max-height:90vh;overflow-y:auto;transform:translateY(20px);transition:transform .3s;}
+    .modal-overlay.open .modal{transform:translateY(0);}
+
+    /* Étapes du paiement */
+    .modal-steps{display:flex;align-items:center;gap:0;padding:24px 32px 0;margin-bottom:28px;}
+    .modal-step{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;letter-spacing:.5px;color:var(--muted);}
+    .modal-step.active{color:var(--brown);}
+    .modal-step.done{color:var(--caramel);}
+    .step-num{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--blush);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+    .modal-step.active .step-num{background:var(--brown);color:var(--cream);border-color:var(--brown);}
+    .modal-step.done .step-num{background:var(--caramel);color:var(--cream);border-color:var(--caramel);}
+    .step-sep{flex:1;height:1px;background:var(--border);margin:0 8px;}
+
+    .modal-body{padding:0 32px 32px;}
+    .modal-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:6px;}
+    .modal-sub{font-size:14px;color:var(--muted);font-weight:300;margin-bottom:24px;}
+    .modal-sec-title{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--caramel);margin:20px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+    /* Champ carte Stripe */
+    .card-field-wrap{background:var(--cream);border:1.5px solid var(--blush);border-radius:12px;padding:16px 18px;transition:border-color .2s;position:relative;}
+    .card-field-wrap.focused{border-color:var(--caramel);}
+    .card-field-wrap.error{border-color:var(--red);}
+    .card-field-wrap.complete{border-color:var(--green);}
+    #card-number-el,#card-expiry-el,#card-cvc-el{width:100%;min-height:22px;}
+    .card-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+    .card-field-mini{background:var(--cream);border:1.5px solid var(--blush);border-radius:12px;padding:16px 18px;transition:border-color .2s;}
+    .card-field-mini.focused{border-color:var(--caramel);}
+    .card-field-mini.error{border-color:var(--red);}
+    .card-field-mini.complete{border-color:var(--green);}
+    .field-label{font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+
+    /* Badges cartes acceptées */
+    .cards-accepted{display:flex;gap:8px;align-items:center;margin-top:10px;}
+    .card-badge{background:var(--warm);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.5px;}
+
+    /* Résumé commande */
+    .order-summary{background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px;}
+    .order-summary-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:5px 0;}
+    .order-summary-row.item-name{color:var(--brown);}
+    .order-summary-row.sub{color:var(--muted);}
+    .order-summary-divider{border:none;border-top:1px solid var(--border);margin:10px 0;}
+    .order-summary-row.total{font-size:17px;font-weight:500;padding-top:10px;}
+
+    /* Modes livraison */
+    .delivery-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
+    .delivery-opt{border:1.5px solid var(--blush);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .2s;}
+    .delivery-opt.selected{border-color:var(--brown);background:rgba(59,34,20,.04);}
+    .delivery-opt input[type=radio]{display:none;}
+    .delivery-opt-title{font-size:14px;font-weight:500;color:var(--brown);margin-bottom:2px;}
+    .delivery-opt-price{font-size:13px;color:var(--caramel);font-weight:500;}
+    .delivery-opt-desc{font-size:12px;color:var(--muted);margin-top:4px;font-weight:300;}
+
+    /* Erreur / Succès paiement */
+    .pay-error{display:flex;align-items:flex-start;gap:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin-top:14px;}
+    .pay-error svg{width:16px;height:16px;stroke:var(--red);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px;}
+    .pay-error-text{font-size:13px;color:var(--red);line-height:1.5;}
+    .pay-success{display:none;text-align:center;padding:20px 0 8px;}
+    .pay-success svg{width:52px;height:52px;stroke:var(--green);fill:none;stroke-width:1.5;margin:0 auto 16px;}
+    .pay-success h3{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:8px;}
+    .pay-success p{font-size:14px;color:var(--muted);font-weight:300;line-height:1.6;}
+
+    .secure-badge{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;font-size:12px;color:var(--muted);}
+    .secure-badge svg{width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:2;}
+
+    /* Loader bouton */
+    .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;margin-right:8px;vertical-align:middle;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* LEGAL PAGES */
+    .legal-page{display:none;position:fixed;inset:0;background:var(--cream);z-index:500;overflow-y:auto;}
+    .legal-page.open{display:block;}
+    .legal-inner{max-width:760px;margin:0 auto;padding:80px 40px;}
+    .legal-back{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--caramel);cursor:pointer;margin-bottom:48px;background:none;border:none;letter-spacing:.5px;transition:gap .2s;font-family:'DM Sans',sans-serif;}
+    .legal-back:hover{gap:12px;}
+    .legal-inner h1{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;margin-bottom:8px;}
+    .legal-inner .legal-date{font-size:13px;color:var(--muted);margin-bottom:48px;}
+    .legal-inner h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin:36px 0 12px;}
+    .legal-inner p,.legal-inner li{font-size:15px;color:var(--muted);font-weight:300;line-height:1.85;}
+    .legal-inner ul{padding-left:20px;margin:12px 0;}
+    .legal-inner li{margin-bottom:6px;}
+    .legal-inner strong{color:var(--brown);font-weight:500;}
+
+    /* FOOTER */
+    footer{background:var(--brown);color:var(--cream);padding:64px 56px 36px;}
+    .footer-top{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr;gap:48px;padding-bottom:48px;border-bottom:1px solid rgba(250,246,239,.1);}
+    .footer-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:14px;}
+    .footer-logo em{font-style:italic;color:var(--gold);}
+    .footer-desc{font-size:14px;color:rgba(250,246,239,.5);font-weight:300;line-height:1.75;max-width:240px;}
+    .footer-social{display:flex;gap:12px;margin-top:20px;}
+    .social-link{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;}
+    .social-link:hover{background:rgba(255,255,255,.14);}
+    .social-link svg{width:17px;height:17px;fill:rgba(250,246,239,.55);transition:fill .2s;}
+    .social-link:hover svg{fill:var(--cream);}
+    .footer-col h4{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:18px;}
+    .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
+    .footer-col ul li a,.footer-col ul li button{font-size:14px;color:rgba(250,246,239,.5);font-weight:300;transition:color .2s;background:none;border:none;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif;text-align:left;}
+    .footer-col ul li a:hover,.footer-col ul li button:hover{color:var(--cream);}
+    .footer-bottom{padding-top:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+    .footer-copy{font-size:12px;color:rgba(250,246,239,.3);}
+    .footer-legal{display:flex;gap:20px;}
+    .footer-legal button{font-size:12px;color:rgba(250,246,239,.35);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color .2s;}
+    .footer-legal button:hover{color:rgba(250,246,239,.7);}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--brown);color:var(--cream);padding:12px 24px;border-radius:40px;font-size:14px;z-index:600;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 6px 24px rgba(59,34,20,.2);}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+    /* ANIMATIONS */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    .reveal{opacity:0;transform:translateY(20px);transition:opacity .65s ease,transform .65s ease;}
+    .reveal.visible{opacity:1;transform:translateY(0);}
+
+    /* RESPONSIVE */
+    @media(max-width:960px){
+      #navbar{padding:0 24px;}.nav-links{display:none;}
+      .hero{padding:100px 24px 60px;grid-template-columns:1fr;}.hero-right{display:none;}
+      section{padding:72px 24px;}
+      .about-grid{grid-template-columns:1fr;}.about-right{display:none;}
+      .livraison-grid{grid-template-columns:1fr;}
+      .footer-top{grid-template-columns:1fr 1fr;}
+      .contact-wrap{grid-template-columns:1fr;gap:40px;}
+      .form-row2,.delivery-options,.card-row{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <div class="nav-logo">Cookie<em>Drop</em></div>
+  <ul class="nav-links">
+    <li><a href="#apropos">À propos</a></li>
+    <li><a href="#cookies">Cookies</a></li>
+    <li><a href="#livraison">Livraison</a></li>
+    <li><a href="#adresses">Adresses</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="cart-btn-wrap">
+    <button class="cart-btn" onclick="openCart()">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      Panier
+    </button>
+    <div class="cart-badge" id="cart-badge">0</div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="accueil">
+  <div class="hero-watermark">Cookies</div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Artisanal &amp; Fait maison</div>
+    <h1>Des cookies <em>d'exception</em>,<br>chaque jour.</h1>
+    <p class="hero-desc">Préparés à la main avec des ingrédients sélectionnés avec soin. Épais, moelleux, réconfortants.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="goTo('cookies')">Découvrir les cookies</button>
+      <button class="btn-outline" onclick="goTo('apropos')">Notre histoire</button>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-stat-row">
+      <div class="hero-stat"><div class="hero-stat-num">12</div><div class="hero-stat-label">Recettes</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">100%</div><div class="hero-stat-label">Maison</div></div>
+    </div>
+    <div class="hero-tagline"><strong>Notre promesse</strong>"Des saveurs authentiques, une qualité sans compromis."</div>
+    <div class="hero-stat-row">
+      <div class="hero-stat"><div class="hero-stat-num">3</div><div class="hero-stat-label">Boutiques</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">2023</div><div class="hero-stat-label">Depuis</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker"><div class="ticker-inner" id="ticker-inner"></div></div>
+
+<!-- À PROPOS -->
+<section id="apropos">
+  <div class="about-grid">
+    <div class="about-left reveal">
+      <div class="section-label">Notre histoire</div>
+      <h2>Né d'une passion pour les <em>vrais</em> cookies</h2>
+      <p>Tout a commencé avec une idée simple : créer des cookies à l'esprit new-yorkais — épais, moelleux, réconfortants. Des cookies que l'on a envie de mordre à pleines dents.</p>
+      <p>Chaque recette est préparée chaque jour avec des ingrédients choisis avec attention : une farine artisanale, un chocolat aux arômes équilibrés, des noisettes du Piémont, du matcha bio...</p>
+      <div class="about-values">
+        <div class="about-value"><div class="about-value-title">Ingrédients premium</div><div class="about-value-text">Farine artisanale, chocolat Valrhona, fruits frais de saison.</div></div>
+        <div class="about-value"><div class="about-value-title">Fait chaque jour</div><div class="about-value-text">Préparés sur place, chaque matin, jamais la veille.</div></div>
+        <div class="about-value"><div class="about-value-title">Recettes uniques</div><div class="about-value-text">Des associations audacieuses imaginées par nos artisans.</div></div>
+        <div class="about-value"><div class="about-value-title">Circuit court</div><div class="about-value-text">Nous privilégions les producteurs locaux et responsables.</div></div>
+      </div>
+    </div>
+    <div class="about-right reveal">
+      <div class="about-quote"><blockquote>"On ne fait pas des cookies pour les vendre. On les fait parce qu'on n'a pas pu s'arrêter d'en manger."</blockquote><cite>— Le fondateur, CookieDrop</cite></div>
+      <div class="about-numbers">
+        <div class="about-num-item"><div class="about-num">12+</div><div class="about-num-lbl">Recettes</div></div>
+        <div class="about-num-item"><div class="about-num">100%</div><div class="about-num-lbl">Maison</div></div>
+        <div class="about-num-item"><div class="about-num">3</div><div class="about-num-lbl">Boutiques</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COOKIES -->
+<section id="cookies">
+  <div class="section-hc reveal">
+    <div class="section-label">Notre carte</div>
+    <h2 class="section-title">Nos <em>cookies</em></h2>
+    <p class="section-sub">Chaque recette est imaginée pour créer une expérience unique</p>
+  </div>
+  <div class="filter-bar reveal" id="filter-bar"></div>
+  <div class="cookies-grid" id="cookies-grid"></div>
+</section>
+
+<!-- LIVRAISON -->
+<section id="livraison">
+  <div class="section-hc reveal">
+    <div class="section-label">Commande &amp; Livraison</div>
+    <h2 class="section-title">Recevez vos <em>cookies</em></h2>
+    <p class="section-sub">Plusieurs options pour recevoir ou récupérer votre commande</p>
+  </div>
+  <div class="livraison-grid">
+    <div class="livraison-card reveal"><div class="livraison-icon"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div class="livraison-title">Livraison à domicile</div><p class="livraison-desc">Colissimo sous 2 à 3 jours ouvrés, partout en France métropolitaine.</p><div class="livraison-price">4,90 € <small>— offerte dès 35 €</small></div></div>
+    <div class="livraison-card reveal"><div class="livraison-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="livraison-title">Click &amp; Collect</div><p class="livraison-desc">Commandez en ligne et récupérez dans l'une de nos boutiques parisiennes.</p><div class="livraison-price">Gratuit</div></div>
+    <div class="livraison-card reveal"><div class="livraison-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="livraison-title">Commande spéciale</div><p class="livraison-desc">Événements, box cadeaux, mariages — contactez-nous pour une commande sur mesure.</p><div class="livraison-price">Sur devis</div></div>
+  </div>
+</section>
+
+<!-- ADRESSES -->
+<section id="adresses">
+  <div class="section-hc reveal"><div class="section-label">Où nous trouver</div><h2 class="section-title">Nos <em>boutiques</em></h2><p class="section-sub">Retrouvez-nous dans nos boutiques parisiennes</p></div>
+  <div class="adresses-grid">
+    <div class="adresse-card reveal"><div class="adresse-num">01</div><div class="adresse-name">Le Marais</div><div class="adresse-addr">42 rue de Bretagne<br>75003 Paris</div><div class="adresse-hours">Lun – Ven : 8h – 19h · Sam – Dim : 9h – 20h</div></div>
+    <div class="adresse-card reveal"><div class="adresse-num">02</div><div class="adresse-name">Saint-Germain</div><div class="adresse-addr">17 rue de Buci<br>75006 Paris</div><div class="adresse-hours">Lun – Ven : 8h – 19h · Sam – Dim : 9h – 20h</div></div>
+    <div class="adresse-card reveal"><div class="adresse-num">03</div><div class="adresse-name">Pigalle</div><div class="adresse-addr">5 rue des Martyrs<br>75009 Paris</div><div class="adresse-hours">Lun – Ven : 9h – 18h · Sam – Dim : 10h – 20h</div></div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-wrap">
+    <div class="contact-info reveal">
+      <div class="section-label">Nous écrire</div>
+      <h2>Une <em>question</em> ?</h2>
+      <p>Pour toute commande spéciale, événement, partenariat ou renseignement.</p>
+      <div class="c-label">Email</div><div class="c-val"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="fe969b929291be9d919195979b9a8c918ed0988c">[email&#160;protected]</a></div>
+      <div class="c-label">Téléphone</div><div class="c-val">+33 1 23 45 67 89</div>
+      <div class="c-label">Horaires</div><div class="c-val">Lun – Sam : 9h à 18h</div>
+    </div>
+    <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="reveal" onsubmit="submitContact(event)">
+      <input type="hidden" name="form-name" value="contact"/>
+      <p style="display:none"><input name="bot-field"/></p>
+      <div class="form-row2"><div class="form-g"><label>Prénom</label><input type="text" name="prenom" placeholder="Marie" required/></div><div class="form-g"><label>Nom</label><input type="text" name="nom" placeholder="Dupont" required/></div></div>
+      <div class="form-g"><label>Email</label><input type="email" name="email" placeholder="marie@exemple.com" required/></div>
+      <div class="form-g"><label>Sujet</label><select name="sujet" required><option value="">Choisir...</option><option>Commande spéciale</option><option>Événement privé</option><option>Partenariat</option><option>Autre</option></select></div>
+      <div class="form-g"><label>Message</label><textarea name="message" placeholder="Votre message..." required></textarea></div>
+      <button type="submit" class="btn-primary" style="width:100%;padding:14px;margin-top:4px">Envoyer</button>
+    </form>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-logo">Cookie<em>Drop</em></div>
+      <p class="footer-desc">Cookies artisanaux préparés avec passion chaque matin.</p>
+      <div class="footer-social">
+        <a class="social-link" href="#" target="_blank" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
+        <a class="social-link" href="#" target="_blank" aria-label="TikTok"><svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.02-.06z"/></svg></a>
+        <a class="social-link" href="#" target="_blank" aria-label="Facebook"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>Navigation</h4><ul><li><a href="#accueil">Accueil</a></li><li><a href="#apropos">À propos</a></li><li><a href="#cookies">Nos cookies</a></li><li><a href="#adresses">Boutiques</a></li><li><a href="#contact">Contact</a></li></ul></div>
+    <div class="footer-col"><h4>Commande</h4><ul><li><a href="#livraison">Livraison</a></li><li><a href="#livraison">Click &amp; Collect</a></li><li><a href="#contact">Événements</a></li></ul></div>
+    <div class="footer-col"><h4>Légal</h4><ul><li><button onclick="openLegal('cgv')">Conditions générales de vente</button></li><li><button onclick="openLegal('confidentialite')">Politique de confidentialité</button></li><li><button onclick="openLegal('mentions')">Mentions légales</button></li><li><button onclick="openLegal('cookies-policy')">Politique des cookies</button></li></ul></div>
+  </div>
+  <div class="footer-bottom"><span class="footer-copy">© 2025 CookieDrop — Tous droits réservés</span><div class="footer-legal"><button onclick="openLegal('cgv')">CGV</button><button onclick="openLegal('confidentialite')">Confidentialité</button><button onclick="openLegal('mentions')">Mentions légales</button></div></div>
+</footer>
+
+<!-- CART DRAWER -->
+<div class="cart-overlay" id="cart-overlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cart-drawer">
+  <div class="cart-head"><h3>Mon panier</h3><button class="cart-close" onclick="closeCart()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="cart-items" id="cart-items-list"></div>
+  <div class="cart-foot" id="cart-foot" style="display:none">
+    <div class="cart-tot-row"><span class="cart-tot-lbl">Sous-total</span><span class="cart-tot-val" id="c-sub"></span></div>
+    <div class="cart-tot-row"><span class="cart-tot-lbl">Livraison</span><span class="cart-tot-val" id="c-liv"></span></div>
+    <div class="cart-tot-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px"><span style="font-weight:500">Total</span><span class="cart-tot-val" id="c-tot" style="font-size:19px"></span></div>
+    <p class="cart-liv-note" id="c-note"></p>
+    <button class="btn-primary" style="width:100%;padding:14px" onclick="openPayment()">Passer la commande</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     MODAL PAIEMENT STRIPE COMPLET
+     ════════════════════════════════ -->
+<div class="modal-overlay" id="payment-modal">
+  <div class="modal">
+
+    <!-- Étapes -->
+    <div class="modal-steps">
+      <div class="modal-step active" id="step1-ind"><div class="step-num">1</div><span>Livraison</span></div>
+      <div class="step-sep"></div>
+      <div class="modal-step" id="step2-ind"><div class="step-num">2</div><span>Coordonnées</span></div>
+      <div class="step-sep"></div>
+      <div class="modal-step" id="step3-ind"><div class="step-num">3</div><span>Paiement</span></div>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- ÉTAPE 1 : Livraison -->
+      <div id="step1">
+        <div class="modal-title">Mode de livraison</div>
+        <p class="modal-sub">Choisissez comment recevoir votre commande</p>
+        <div class="modal-sec-title">Options disponibles</div>
+        <div class="delivery-options">
+          <label class="delivery-opt selected" id="opt-domicile" onclick="selectDelivery('domicile')">
+            <input type="radio" name="delivery" value="domicile" checked/>
+            <div class="delivery-opt-title">Livraison à domicile</div>
+            <div class="delivery-opt-price" id="liv-price-label">4,90 €</div>
+            <div class="delivery-opt-desc">Colissimo — 2 à 3 jours ouvrés</div>
+          </label>
+          <label class="delivery-opt" id="opt-collect" onclick="selectDelivery('collect')">
+            <input type="radio" name="delivery" value="collect"/>
+            <div class="delivery-opt-title">Click &amp; Collect</div>
+            <div class="delivery-opt-price">Gratuit</div>
+            <div class="delivery-opt-desc">Retrait en boutique parisienne</div>
+          </label>
+        </div>
+        <div id="addr-fields" style="margin-top:16px">
+          <div class="modal-sec-title">Adresse de livraison</div>
+          <div class="form-g"><label>Adresse</label><input type="text" id="p-addr" placeholder="12 rue de la Paix" required/></div>
+          <div class="form-row2">
+            <div class="form-g"><label>Code postal</label><input type="text" id="p-cp" placeholder="75001" maxlength="5"/></div>
+            <div class="form-g"><label>Ville</label><input type="text" id="p-city" placeholder="Paris"/></div>
+          </div>
+        </div>
+        <div id="collect-info" style="display:none;margin-top:16px">
+          <div class="modal-sec-title">Choisir votre boutique</div>
+          <div class="form-g"><select id="p-boutique"><option value="marais">Le Marais — 42 rue de Bretagne, 75003</option><option value="sgermain">Saint-Germain — 17 rue de Buci, 75006</option><option value="pigalle">Pigalle — 5 rue des Martyrs, 75009</option></select></div>
+        </div>
+        <button class="btn-primary" style="width:100%;padding:14px;margin-top:20px" onclick="goStep(2)">Continuer</button>
+        <div style="text-align:center;margin-top:12px"><button onclick="closePayment()" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);font-family:'DM Sans',sans-serif">Annuler</button></div>
+      </div>
+
+      <!-- ÉTAPE 2 : Coordonnées -->
+      <div id="step2" style="display:none">
+        <div class="modal-title">Vos coordonnées</div>
+        <p class="modal-sub">Pour l'envoi de votre confirmation et du reçu</p>
+        <div class="form-row2">
+          <div class="form-g"><label>Prénom</label><input type="text" id="p-first" placeholder="Marie"/></div>
+          <div class="form-g"><label>Nom</label><input type="text" id="p-last" placeholder="Dupont"/></div>
+        </div>
+        <div class="form-g"><label>Email</label><input type="email" id="p-email" placeholder="marie@exemple.com"/></div>
+        <div class="form-g"><label>Téléphone (optionnel)</label><input type="tel" id="p-phone" placeholder="+33 6 00 00 00 00"/></div>
+        <!-- Résumé commande -->
+        <div class="modal-sec-title">Récapitulatif</div>
+        <div class="order-summary" id="order-summary"></div>
+        <button class="btn-primary" style="width:100%;padding:14px;margin-top:8px" onclick="goStep(3)">Continuer vers le paiement</button>
+        <div style="text-align:center;margin-top:10px"><button onclick="goStep(1)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);font-family:'DM Sans',sans-serif">← Retour</button></div>
+      </div>
+
+      <!-- ÉTAPE 3 : Paiement Stripe -->
+      <div id="step3" style="display:none">
+        <div class="modal-title">Paiement sécurisé</div>
+        <p class="modal-sub">Entrez vos coordonnées bancaires ci-dessous</p>
+
+        <!-- Cartes acceptées -->
+        <div class="cards-accepted">
+          <div class="card-badge">Visa</div>
+          <div class="card-badge">Mastercard</div>
+          <div class="card-badge">Amex</div>
+          <div class="card-badge">CB</div>
+        </div>
+
+        <div class="modal-sec-title">Numéro de carte</div>
+        <div class="card-field-wrap" id="card-number-wrap">
+          <div class="field-label">Numéro de carte</div>
+          <div id="card-number-el"></div>
+        </div>
+        <div class="card-row" style="margin-top:12px">
+          <div class="card-field-mini" id="card-expiry-wrap">
+            <div class="field-label">Date d'expiration</div>
+            <div id="card-expiry-el"></div>
+          </div>
+          <div class="card-field-mini" id="card-cvc-wrap">
+            <div class="field-label">CVC / CVV</div>
+            <div id="card-cvc-el"></div>
+          </div>
+        </div>
+
+        <!-- Erreur paiement -->
+        <div id="pay-error-box" style="display:none" class="pay-error">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span class="pay-error-text" id="pay-error-msg"></span>
+        </div>
+
+        <!-- Total final -->
+        <div class="modal-sec-title">Montant à payer</div>
+        <div class="order-summary" id="order-summary-pay"></div>
+
+        <button class="btn-primary" id="btn-pay-confirm" style="width:100%;padding:15px;font-size:15px;margin-top:8px" onclick="confirmPayment()">
+          Payer maintenant
+        </button>
+
+        <div class="secure-badge">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Paiement chiffré SSL — Propulsé par Stripe
+        </div>
+        <div style="text-align:center;margin-top:10px"><button onclick="goStep(2)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);font-family:'DM Sans',sans-serif">← Retour</button></div>
+      </div>
+
+      <!-- SUCCÈS -->
+      <div id="step-success" style="display:none">
+        <div class="pay-success" style="display:block">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+          <h3>Commande confirmée !</h3>
+          <p>Merci pour votre achat. Un email de confirmation a été envoyé à <strong id="confirm-email"></strong>.</p>
+          <p style="margin-top:12px">Vos cookies sont en cours de préparation.</p>
+          <button class="btn-primary" style="margin-top:28px;padding:12px 28px" onclick="closePayment()">Fermer</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- PAGES LÉGALES -->
+<div class="legal-page" id="page-cgv"><div class="legal-inner"><button class="legal-back" onclick="closeLegal('cgv')">← Retour au site</button><h1>Conditions Générales de Vente</h1><p class="legal-date">En vigueur au 1er janvier 2025</p><h2>Article 1 — Identification du vendeur</h2><p><strong>CookieDrop</strong> — [Forme juridique]<br>Siège social : [Adresse]<br>SIRET : [À compléter]<br>Email : <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d6beb3babab996b5b9b9bdbfb3b2a4b9a6f8b0a4">[email&#160;protected]</a></p><h2>Article 2 — Objet</h2><p>Les présentes CGV régissent toutes les ventes de cookies artisanaux réalisées via le site CookieDrop. Toute commande implique l'acceptation sans réserve de ces conditions.</p><h2>Article 3 — Produits</h2><p>Les cookies sont préparés artisanalement. De légères variations sont inhérentes à leur fabrication manuelle. La carte peut être modifiée à tout moment.</p><h2>Article 4 — Prix</h2><p>Prix en euros TTC. Tarif applicable : celui affiché au moment de la validation de commande.</p><h2>Article 5 — Paiement</h2><p>Paiement en ligne par carte bancaire via Stripe (certifié PCI-DSS). Aucune donnée bancaire n'est stockée par CookieDrop. Le débit a lieu à la confirmation de commande.</p><h2>Article 6 — Livraison</h2><p>Livraison Colissimo sous 2 à 3 jours ouvrés en France. Frais : 4,90 € — offerts dès 35 €. Les délais sont indicatifs.</p><h2>Article 7 — Droit de rétractation</h2><p>Exclu pour les denrées alimentaires périssables (art. L221-28 du Code de la Consommation). Aucun retour ni remboursement sauf produit défectueux.</p><h2>Article 8 — Réclamations</h2><p>Délai de 24h après réception pour signaler un produit non conforme à <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bed6dbd2d2d1feddd1d1d5d7dbdaccd1ce90d8cc">[email&#160;protected]</a> avec photos.</p><h2>Article 9 — Droit applicable</h2><p>Droit français. Médiation disponible via ec.europa.eu/consumers/odr</p></div></div>
+
+<div class="legal-page" id="page-confidentialite"><div class="legal-inner"><button class="legal-back" onclick="closeLegal('confidentialite')">← Retour au site</button><h1>Politique de Confidentialité</h1><p class="legal-date">En vigueur au 1er janvier 2025 — Conforme au RGPD</p><h2>1. Responsable du traitement</h2><p><strong>CookieDrop</strong>, [Forme juridique], [Adresse], représentée par [Nom du gérant].</p><h2>2. Données collectées</h2><ul><li>Identification : nom, prénom, email</li><li>Livraison : adresse postale</li><li>Transaction : montant, date (sans coordonnées bancaires)</li><li>Navigation : cookies techniques et analytiques</li></ul><h2>3. Finalités &amp; base légale</h2><ul><li>Traitement des commandes — Exécution du contrat</li><li>Gestion client — Intérêt légitime</li><li>Communications commerciales — Consentement</li><li>Obligations légales — Obligation légale</li></ul><h2>4. Durée de conservation</h2><p>Données clients : 3 ans. Données comptables : 10 ans. Cookies : 13 mois max.</p><h2>5. Destinataires</h2><p>Stripe (paiement), La Poste/Colissimo (livraison). Ces partenaires protègent contractuellement vos données.</p><h2>6. Vos droits</h2><p>Accès, rectification, effacement, limitation, portabilité, opposition. Contact : <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0b636e6767644b68646460626e6f79647b256d79">[email&#160;protected]</a>. Réclamation possible auprès de la CNIL (www.cnil.fr).</p></div></div>
+
+<div class="legal-page" id="page-mentions"><div class="legal-inner"><button class="legal-back" onclick="closeLegal('mentions')">← Retour au site</button><h1>Mentions Légales</h1><p class="legal-date">En vigueur au 1er janvier 2025</p><h2>Éditeur du site</h2><p><strong>CookieDrop</strong><br>[Forme juridique]<br>Siège : [Adresse]<br>SIRET : [À compléter]<br>Email : <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2e464b4242416e4d414145474b4a5c415e00485c">[email&#160;protected]</a><br>Directeur de la publication : [Nom]</p><h2>Hébergement</h2><p>[Nom de l'hébergeur] — [Adresse] — [Site web]</p><h2>Propriété intellectuelle</h2><p>Tout le contenu du site est la propriété de CookieDrop et protégé par le droit d'auteur. Reproduction interdite sans autorisation.</p></div></div>
+
+<div class="legal-page" id="page-cookies-policy"><div class="legal-inner"><button class="legal-back" onclick="closeLegal('cookies-policy')">← Retour au site</button><h1>Politique des Cookies</h1><p class="legal-date">En vigueur au 1er janvier 2025</p><h2>Cookies utilisés</h2><ul><li><strong>Nécessaires</strong> : panier, session utilisateur. Ne peuvent être désactivés.</li><li><strong>Performance</strong> : mesure d'audience anonyme. Soumis à consentement.</li><li><strong>Stripe</strong> : cookies techniques pour le paiement sécurisé.</li></ul><h2>Durée de conservation</h2><p>13 mois maximum (recommandation CNIL).</p><h2>Gestion</h2><p>Configurable via les paramètres de votre navigateur. Contact : <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bcd4d9d0d0d3fcdfd3d3d7d5d9d8ced3cc92dace">[email&#160;protected]</a></p></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+/* ══════════════════════════════════════════════════
+   CONFIGURATION — MODIFIER CES 2 LIGNES
+   ══════════════════════════════════════════════════ */
+const STRIPE_PK  = "pk_test_REMPLACEZ_PAR_VOTRE_CLE_PUBLIQUE_STRIPE";
+const BACKEND_URL = "/.netlify/functions/create-payment"; // Netlify Function
+/* ══════════════════════════════════════════════════ */
+
+const COOKIES_DATA=[
+  {id:1,name:"Chocolat Noir",      desc:"Chocolat Valrhona 70%, fleur de sel de Guérande",       price:2.50,cat:"chocolat"},
+  {id:2,name:"Double Chocolat",    desc:"Pâte et pépites de chocolat au lait, cœur fondant",     price:2.80,cat:"chocolat"},
+  {id:3,name:"Praliné Noisette",   desc:"Praliné artisanal, éclats de noisettes du Piémont",     price:2.90,cat:"chocolat"},
+  {id:4,name:"Fraise & Vanille",   desc:"Confiture de fraise maison, vanille de Madagascar",     price:2.90,cat:"fruits"},
+  {id:5,name:"Citron Glacé",       desc:"Zeste de citron de Sicile, glaçage acidulé",            price:2.70,cat:"fruits"},
+  {id:6,name:"Myrtille & Citron",  desc:"Myrtilles fraîches, crème citronnée, sucre muscovado",  price:2.80,cat:"fruits"},
+  {id:7,name:"Matcha & Sésame",    desc:"Matcha bio du Japon, sésame noir torréfié, Dulcey",     price:3.10,cat:"speciaux"},
+  {id:8,name:"Beurre Cacahuète",   desc:"Peanut butter crunchy, caramel salé maison",            price:2.80,cat:"speciaux"},
+  {id:9,name:"Banoffee",           desc:"Dulcey Valrhona, banane, noix de pécan, muscade",       price:3.20,cat:"speciaux"},
+];
+const CATS=[{key:"tous",label:"Tous"},{key:"chocolat",label:"Chocolat"},{key:"fruits",label:"Fruits"},{key:"speciaux",label:"Spéciaux"}];
+const LIV_PRIX=4.90, LIV_SEUIL=35;
+
+let cart=[], deliveryMode="domicile";
+let stripe=null, cardNumber=null, cardExpiry=null, cardCvc=null, stripeReady=false;
+
+/* ── TICKER ── */
+(function(){const w=["Fait maison","Ingrédients premium","Livraison Paris","Click & Collect","Cuit chaque jour","Chocolat Valrhona"];let h="";for(let i=0;i<2;i++)w.forEach(x=>{h+=`<span class="ticker-item">${x}</span><span class="ticker-sep">◆</span>`;});document.getElementById("ticker-inner").innerHTML=h;})();
+
+/* ── FILTERS + COOKIES ── */
+document.getElementById("filter-bar").innerHTML=CATS.map(c=>`<button class="filter-btn${c.key==="tous"?" active":""}" onclick="setFilter('${c.key}',this)">${c.label}</button>`).join("");
+function setFilter(k,b){document.querySelectorAll(".filter-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderCookies(k);}
+
+function getQtyInCart(id){return cart.filter(c=>c.id===id).length;}
+
+function cardControlHTML(c, qty){
+  if(qty===0){
+    return `<button class="add-btn" onclick="cardAdd(${c.id})" aria-label="Ajouter au panier">Ajouter au panier</button>`;
+  }
+  return `<div class="card-qty" id="cqty-${c.id}">
+    <button class="card-qty-btn minus" onclick="cardDec(${c.id})" aria-label="Retirer un">&#8722;</button>
+    <span class="card-qty-num">${qty}</span>
+    <button class="card-qty-btn" onclick="cardInc(${c.id})" aria-label="Ajouter un">&#43;</button>
+  </div>`;
+}
+
+function renderCookies(f="tous"){
+  const d=f==="tous"?COOKIES_DATA:COOKIES_DATA.filter(c=>c.cat===f);
+  document.getElementById("cookies-grid").innerHTML=d.map((c,i)=>{
+    const qty=getQtyInCart(c.id);
+    return `<div class="cookie-card reveal visible" style="transition-delay:${i*.05}s" id="cc-${c.id}">
+      <div class="cookie-card-top">
+        <div class="cookie-letter">${c.name.charAt(0)}</div>
+        <div class="cookie-name">${c.name}</div>
+        <p class="cookie-desc">${c.desc}</p>
+      </div>
+      <div class="cookie-card-bot">
+        <div class="cookie-price">${fmt(c.price)} <small>/ pièce</small></div>
+        <div id="cc-ctrl-${c.id}">${cardControlHTML(c, qty)}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+renderCookies();
+
+/* ── CART STATE ── */
+// cart stores {id, name, price} — one entry per unit
+// Grouped: [{id, name, price, qty, subtotal}]
+function getGroupedCart(){
+  const map={};
+  cart.forEach(c=>{
+    if(!map[c.id]) map[c.id]={id:c.id,name:c.name,price:c.price,qty:0};
+    map[c.id].qty++;
+  });
+  return Object.values(map).map(g=>({...g,subtotal:g.price*g.qty}));
+}
+
+function updateCartBadge(){
+  const total=cart.length;
+  const badge=document.getElementById("cart-badge");
+  badge.textContent=total;
+  if(total>0){
+    badge.classList.add("visible");
+    badge.classList.remove("bump");
+    void badge.offsetWidth; // reflow pour reset animation
+    badge.classList.add("bump");
+  } else {
+    badge.classList.remove("visible");
+  }
+}
+
+function addToCart(id){
+  const c=COOKIES_DATA.find(x=>x.id===id);
+  cart.push({...c});
+  updateCartBadge();
+  updateCardBtn(id);
+  showToast(`${c.name} ajouté au panier`);
+}
+
+function updateCardBtn(id){
+  const ctrl=document.getElementById("cc-ctrl-"+id);
+  if(!ctrl) return;
+  const c=COOKIES_DATA.find(x=>x.id===id);
+  const qty=getQtyInCart(id);
+  ctrl.innerHTML=cardControlHTML(c, qty);
+}
+
+// Appels depuis les boutons sur la carte
+function cardAdd(id){
+  const c=COOKIES_DATA.find(x=>x.id===id);
+  cart.push({...c});
+  updateCartBadge();
+  updateCardBtn(id);
+  if(document.getElementById("cart-drawer").classList.contains("open")) renderCartItems();
+  showToast(c.name+" ajouté au panier");
+}
+function cardInc(id){
+  const c=COOKIES_DATA.find(x=>x.id===id);
+  cart.push({...c});
+  updateCartBadge();
+  updateCardBtn(id);
+  if(document.getElementById("cart-drawer").classList.contains("open")) renderCartItems();
+}
+function cardDec(id){
+  const idx=cart.map(c=>c.id).lastIndexOf(id);
+  if(idx>=0) cart.splice(idx,1);
+  updateCartBadge();
+  updateCardBtn(id);
+  if(document.getElementById("cart-drawer").classList.contains("open")) renderCartItems();
+}
+
+function changeQty(id, delta){
+  if(delta<0){
+    // Retirer une unité
+    const idx=cart.findLastIndex ? cart.findLastIndex(c=>c.id===id) : [...cart].reverse().findIndex(c=>c.id===id);
+    if(idx>=0){
+      const realIdx = cart.findLastIndex ? idx : cart.length-1-idx;
+      cart.splice(realIdx,1);
+    }
+  } else {
+    const c=COOKIES_DATA.find(x=>x.id===id);
+    cart.push({...c});
+  }
+  updateCartBadge();
+  updateCardBtn(id);
+  renderCartItems();
+}
+
+function removeAllOfId(id){
+  cart=cart.filter(c=>c.id!==id);
+  updateCartBadge();
+  updateCardBtn(id);
+  renderCartItems();
+}
+
+function getCartTotals(mode){const sub=cart.reduce((s,c)=>s+c.price,0);const liv=(mode||deliveryMode)==="collect"?0:(sub>=LIV_SEUIL?0:LIV_PRIX);return{sub,liv,total:sub+liv};}
+
+function renderCartItems(){
+  const list=document.getElementById("cart-items-list"),foot=document.getElementById("cart-foot");
+  if(!cart.length){
+    list.innerHTML=`<div class="cart-empty"><p>Votre panier est vide.</p></div>`;
+    foot.style.display="none";
+    return;
+  }
+  const grouped=getGroupedCart();
+  list.innerHTML=grouped.map(g=>`
+    <div class="cart-item">
+      <div class="cart-item-init">${g.name.charAt(0)}</div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${g.name}</div>
+        <div class="cart-item-unit-price">${fmt(g.price)} / pièce</div>
+      </div>
+      <div class="qty-controls">
+        <button class="qty-btn${g.qty===1?" remove":""}" onclick="changeQty(${g.id},-1)" aria-label="Retirer un">${g.qty===1?'<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>':'−'}</button>
+        <span class="qty-num">${g.qty}</span>
+        <button class="qty-btn" onclick="changeQty(${g.id},1)" aria-label="Ajouter un">+</button>
+      </div>
+      <div class="cart-item-subtotal">${fmt(g.subtotal)}</div>
+    </div>`
+  ).join("");
+  foot.style.display="block";
+  const t=getCartTotals();
+  document.getElementById("c-sub").textContent=fmt(t.sub);
+  document.getElementById("c-liv").textContent=t.liv===0?"Offerte":fmt(t.liv);
+  document.getElementById("c-tot").textContent=fmt(t.total);
+  document.getElementById("c-note").textContent=t.liv===0?"Livraison offerte !":`Livraison offerte dès ${LIV_SEUIL} € (manque ${fmt(LIV_SEUIL-t.sub)})`;
+}
+
+function openCart(){renderCartItems();document.getElementById("cart-overlay").classList.add("open");document.getElementById("cart-drawer").classList.add("open");document.body.style.overflow="hidden";}
+function closeCart(){document.getElementById("cart-overlay").classList.remove("open");document.getElementById("cart-drawer").classList.remove("open");document.body.style.overflow="";}
+
+/* ── CONTACT ── */
+function submitContact(e){
+  // Netlify Forms gère l'envoi — on laisse le POST se faire
+  // On affiche juste un message de confirmation
+  e.preventDefault();
+  const form=e.target;
+  fetch("/",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams(new FormData(form)).toString()})
+    .then(()=>{showToast("Message envoyé ! On vous répond sous 24h.");form.reset();})
+    .catch(()=>{showToast("Erreur d'envoi. Contactez-nous par email.");});
+}
+
+/* ── DELIVERY SELECTION ── */
+function selectDelivery(mode){
+  deliveryMode=mode;
+  document.getElementById("opt-domicile").classList.toggle("selected",mode==="domicile");
+  document.getElementById("opt-collect").classList.toggle("selected",mode==="collect");
+  document.getElementById("addr-fields").style.display=mode==="domicile"?"block":"none";
+  document.getElementById("collect-info").style.display=mode==="collect"?"block":"none";
+  const t=getCartTotals(mode);
+  document.getElementById("liv-price-label").textContent=t.liv===0?"Offerte":fmt(t.liv);
+}
+
+/* ── ORDER SUMMARY HTML ── */
+function buildSummaryHTML(){
+  const t=getCartTotals();
+  const grouped=getGroupedCart();
+  let rows=grouped.map(g=>`<div class="order-summary-row item-name"><span>${g.name}${g.qty>1?` × ${g.qty}`:""}</span><span>${fmt(g.subtotal)}</span></div>`).join("");
+  rows+=`<hr class="order-summary-divider"><div class="order-summary-row sub"><span>Sous-total</span><span>${fmt(t.sub)}</span></div><div class="order-summary-row sub"><span>Livraison</span><span>${t.liv===0?"Offerte":fmt(t.liv)}</span></div><hr class="order-summary-divider"><div class="order-summary-row total"><span>Total</span><span>${fmt(t.total)}</span></div>`;
+  return rows;
+}
+
+/* ── STEP NAVIGATION ── */
+function goStep(n){
+  // Valider étape 1
+  if(n===2&&deliveryMode==="domicile"){
+    const addr=document.getElementById("p-addr").value.trim();
+    if(!addr){showToast("Veuillez renseigner votre adresse");return;}
+  }
+  // Valider étape 2
+  if(n===3){
+    const email=document.getElementById("p-email").value.trim();
+    const first=document.getElementById("p-first").value.trim();
+    if(!first||!email){showToast("Veuillez renseigner vos coordonnées");return;}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showToast("Adresse email invalide");return;}
+    document.getElementById("order-summary-pay").innerHTML=buildSummaryHTML();
+    if(!stripeReady) initStripeElements();
+  }
+  if(n===2) document.getElementById("order-summary").innerHTML=buildSummaryHTML();
+  [1,2,3].forEach(i=>{
+    document.getElementById("step"+i).style.display=i===n?"block":"none";
+    const ind=document.getElementById("step"+i+"-ind");
+    ind.className="modal-step"+(i===n?" active":i<n?" done":"");
+  });
+}
+
+/* ── STRIPE ELEMENTS ── */
+function initStripeElements(){
+  if(stripeReady) return;
+  stripe=Stripe(STRIPE_PK);
+  const elements=stripe.elements();
+  const style={base:{fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:"#3B2214","::placeholder":{color:"#b8a898"}},invalid:{color:"#c0392b"}};
+
+  cardNumber=elements.create("cardNumber",{style,placeholder:"1234 5678 9012 3456",showIcon:true});
+  cardExpiry=elements.create("cardExpiry",{style,placeholder:"MM / AA"});
+  cardCvc   =elements.create("cardCvc",   {style,placeholder:"123"});
+
+  cardNumber.mount("#card-number-el");
+  cardExpiry.mount("#card-expiry-el");
+  cardCvc.mount("#card-cvc-el");
+
+  // Feedback visuel sur les champs
+  [
+    {el:cardNumber, wrap:"card-number-wrap"},
+    {el:cardExpiry, wrap:"card-expiry-wrap"},
+    {el:cardCvc,    wrap:"card-cvc-wrap"},
+  ].forEach(({el,wrap})=>{
+    el.on("focus",  ()=>document.getElementById(wrap).classList.add("focused"));
+    el.on("blur",   ()=>document.getElementById(wrap).classList.remove("focused"));
+    el.on("change", e=>{
+      const w=document.getElementById(wrap);
+      w.classList.toggle("error",    !!e.error);
+      w.classList.toggle("complete", !!e.complete);
+      if(e.error){showPayError(e.error.message);}else{hidePayError();}
+    });
+  });
+
+  stripeReady=true;
+}
+
+/* ── PAIEMENT ── */
+function openPayment(){
+  if(!cart.length) return;
+  closeCart();
+  selectDelivery("domicile");
+  goStep(1);
+  document.getElementById("step-success").style.display="none";
+  document.getElementById("payment-modal").classList.add("open");
+  document.body.style.overflow="hidden";
+}
+function closePayment(){document.getElementById("payment-modal").classList.remove("open");document.body.style.overflow="";}
+
+async function confirmPayment(){
+  const btn=document.getElementById("btn-pay-confirm");
+  hidePayError();
+  btn.disabled=true;
+  btn.innerHTML=`<span class="spinner"></span>Traitement en cours...`;
+
+  try {
+    const t=getCartTotals();
+    const totalCentimes=Math.round(t.total*100);
+    const email=document.getElementById("p-email").value.trim();
+    const nom=(document.getElementById("p-first").value+" "+document.getElementById("p-last").value).trim();
+
+    /* ── Appel au backend PHP pour créer le PaymentIntent ── */
+    const res=await fetch(BACKEND_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        amount:totalCentimes,
+        email,
+        nom,
+        livraison:deliveryMode,
+        items:cart.map(c=>({name:c.name,price:c.price})),
+      })
+    });
+
+    if(!res.ok){
+      const err=await res.json();
+      throw new Error(err.error||"Erreur serveur");
+    }
+
+    const {clientSecret}=await res.json();
+
+    /* ── Confirmation paiement côté Stripe ── */
+    const {error,paymentIntent}=await stripe.confirmCardPayment(clientSecret,{
+      payment_method:{
+        card:cardNumber,
+        billing_details:{name:nom,email}
+      }
+    });
+
+    if(error){
+      // Erreurs carte courantes en français
+      const msgs={
+        card_declined:"Carte refusée. Vérifiez vos informations ou utilisez une autre carte.",
+        insufficient_funds:"Fonds insuffisants sur cette carte.",
+        incorrect_cvc:"Code CVC incorrect.",
+        expired_card:"Cette carte est expirée.",
+        incorrect_number:"Numéro de carte incorrect.",
+        processing_error:"Erreur de traitement. Veuillez réessayer.",
+      };
+      throw new Error(msgs[error.code]||error.message);
+    }
+
+    if(paymentIntent.status==="succeeded"){
+      /* ── Succès ── */
+      cart=[];
+      updateCartBadge();
+      // Remettre tous les boutons des cartes à l'état initial
+      COOKIES_DATA.forEach(c=>updateCardBtn(c.id));
+      document.getElementById("confirm-email").textContent=email;
+      [1,2,3].forEach(i=>document.getElementById("step"+i).style.display="none");
+      document.getElementById("step-success").style.display="block";
+    }
+
+  } catch(e){
+    showPayError(e.message);
+    btn.disabled=false;
+    btn.textContent="Payer maintenant";
+  }
+}
+
+function showPayError(msg){const b=document.getElementById("pay-error-box");b.style.display="flex";document.getElementById("pay-error-msg").textContent=msg;}
+function hidePayError(){document.getElementById("pay-error-box").style.display="none";}
+
+/* ── LEGAL ── */
+function openLegal(id){document.getElementById("page-"+id).classList.add("open");document.body.style.overflow="hidden";window.scrollTo(0,0);}
+function closeLegal(id){document.getElementById("page-"+id).classList.remove("open");document.body.style.overflow="";}
+
+/* ── UTILS ── */
+function fmt(n){return n.toFixed(2).replace(".",",")+" €";}
+function goTo(id){document.getElementById(id).scrollIntoView({behavior:"smooth"});}
+let toastTimer;
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),3200);}
+
+/* ── SCROLL REVEAL ── */
+// Forcer visible immédiatement pour tous les éléments déjà dans le viewport
+function revealAll(){
+  document.querySelectorAll(".reveal").forEach(el=>{
+    const rect=el.getBoundingClientRect();
+    if(rect.top < window.innerHeight + 100) el.classList.add("visible");
+  });
+}
+
+const revealObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting) e.target.classList.add("visible");});
+},{threshold:0.05, rootMargin:"0px 0px -40px 0px"});
+
+document.querySelectorAll(".reveal").forEach(el=>revealObs.observe(el));
+
+// Déclencher au chargement + après un court délai (pour les fonts)
+revealAll();
+setTimeout(revealAll, 200);
+window.addEventListener("scroll", revealAll, {passive:true});
+
+window.addEventListener("scroll",()=>document.getElementById("navbar").classList.toggle("scrolled",scrollY>30));
+
+// Re-observer les nouvelles cards générées dynamiquement
+new MutationObserver(()=>{
+  document.querySelectorAll(".reveal:not(.visible)").forEach(el=>{
+    revealObs.observe(el);
+    const rect=el.getBoundingClientRect();
+    if(rect.top < window.innerHeight + 100) el.classList.add("visible");
+  });
+}).observe(document.getElementById("cookies-grid"),{childList:true});
+</script>
+</body>
+</html>
