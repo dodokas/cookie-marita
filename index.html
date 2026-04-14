@@ -21,7 +21,7 @@
     /* NAV */
     #navbar{position:fixed;top:0;left:0;right:0;z-index:200;height:64px;padding:0 56px;display:flex;align-items:center;justify-content:space-between;background:rgba(250,246,239,0.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);transition:box-shadow .3s;}
     #navbar.scrolled{box-shadow:0 2px 24px rgba(59,34,20,.09);}
-    .nav-logo{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;}
+    .nav-logo{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;cursor:pointer;text-decoration:none;color:inherit;}
     .nav-logo em{font-style:italic;color:var(--caramel);}
     .nav-links{display:flex;gap:34px;list-style:none;}
     .nav-links a{font-size:12px;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);transition:color .2s;}
@@ -90,10 +90,8 @@
 
     /* COOKIES */
     #cookies{background:var(--white);}
-    .filter-bar{display:flex;gap:10px;margin-bottom:50px;flex-wrap:wrap;}
-    .filter-btn{padding:8px 22px;border-radius:30px;border:1.5px solid var(--blush);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;}
-    .filter-btn.active,.filter-btn:hover{background:var(--brown);color:var(--cream);border-color:var(--brown);}
-    .cookies-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px;}
+
+    .cookies-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
     .cookie-card{background:var(--cream);border:1px solid var(--border);border-radius:20px;overflow:hidden;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
     .cookie-card:hover{transform:translateY(-5px);box-shadow:0 14px 40px rgba(59,34,20,.1);border-color:var(--blush);}
     .cookie-card-top{padding:32px 24px 24px;border-bottom:1px solid var(--border);background:var(--warm);}
@@ -179,11 +177,10 @@
     .cart-item-subtotal{font-size:13px;font-weight:500;color:var(--brown);min-width:44px;text-align:right;flex-shrink:0;}
 
     /* Badge panier animé */
-    .cart-badge{position:absolute;top:-6px;right:-6px;background:var(--caramel);color:var(--cream);font-size:11px;font-weight:700;min-width:18px;height:18px;border-radius:20px;display:flex;align-items:center;justify-content:center;padding:0 4px;pointer-events:none;transform:scale(0);transition:transform .25s cubic-bezier(.34,1.56,.64,1);}
-    .cart-badge.visible{transform:scale(1);}
-    .cart-badge.bump{animation:bump .3s cubic-bezier(.34,1.56,.64,1);}
+    
+    
+    
     @keyframes bump{0%{transform:scale(1)}50%{transform:scale(1.4)}100%{transform:scale(1)}}
-    .cart-btn-wrap{position:relative;}
     .cart-foot{padding:20px 28px;border-top:1px solid var(--border);flex-shrink:0;}
     .cart-tot-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
     .cart-tot-lbl{font-size:13px;color:var(--muted);}
@@ -280,7 +277,7 @@
     /* FOOTER */
     footer{background:var(--brown);color:var(--cream);padding:64px 56px 36px;}
     .footer-top{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr;gap:48px;padding-bottom:48px;border-bottom:1px solid rgba(250,246,239,.1);}
-    .footer-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:14px;}
+    .footer-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:14px;text-decoration:none;display:block;color:var(--cream);}
     .footer-logo em{font-style:italic;color:var(--gold);}
     .footer-desc{font-size:14px;color:rgba(250,246,239,.5);font-weight:300;line-height:1.75;max-width:240px;}
     .footer-social{display:flex;gap:12px;margin-top:20px;}
@@ -308,16 +305,110 @@
     .reveal{opacity:0;transform:translateY(20px);transition:opacity .65s ease,transform .65s ease;}
     .reveal.visible{opacity:1;transform:translateY(0);}
 
-    /* RESPONSIVE */
+    /* ── MOBILE NAVBAR ── */
+    /* Bouton hamburger - caché sur desktop */
+    .mob-menu-btn{display:none;}
+    /* FAB panier - caché sur desktop */
+    .mob-cart-fab{display:none;}
+    /* Drawer mobile */
+    .mob-drawer{
+      position:fixed;top:0;left:0;right:0;z-index:400;
+      background:var(--white);
+      transform:translateY(-100%);
+      transition:transform .35s cubic-bezier(.4,0,.2,1);
+      padding:80px 32px 36px;
+      box-shadow:0 8px 40px rgba(59,34,20,.12);
+      border-bottom:1px solid var(--border);
+    }
+    .mob-drawer.open{transform:translateY(0);}
+    .mob-drawer-overlay{
+      position:fixed;inset:0;z-index:399;
+      background:rgba(59,34,20,.35);
+      opacity:0;pointer-events:none;transition:opacity .3s;
+    }
+    .mob-drawer-overlay.open{opacity:1;pointer-events:all;}
+    .mob-drawer-links{display:flex;flex-direction:column;gap:6px;margin-bottom:28px;}
+    .mob-drawer-links a{
+      font-family:'Calibri',sans-serif;font-size:26px;font-weight:700;
+      color:var(--brown);text-decoration:none;padding:6px 0;
+      border-bottom:1px solid var(--border);display:block;
+      transition:color .2s,padding-left .2s;
+    }
+    .mob-drawer-links a:hover{color:var(--caramel);padding-left:8px;}
+    .mob-drawer-links a:last-child{border-bottom:none;}
+    .mob-drawer-cart{
+      width:100%;padding:14px;background:var(--brown);color:var(--cream);
+      border:none;border-radius:40px;font-family:'DM Sans',sans-serif;
+      font-size:15px;font-weight:500;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+    }
+    .mob-drawer-cart svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
     @media(max-width:960px){
-      #navbar{padding:0 24px;}.nav-links{display:none;}
-      .hero{padding:100px 24px 60px;grid-template-columns:1fr;}.hero-right{display:none;}
-      section{padding:72px 24px;}
+      /* Navbar mobile redessinée */
+      #navbar{padding:0 20px;height:64px;background:rgba(250,246,239,0.97);}
+      .nav-links{display:none;}
+      .cart-btn-wrap{display:none;}
+
+      
+      /* Hamburger visible */
+      .mob-menu-btn{
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        gap:5px;width:44px;height:44px;background:var(--warm);
+        border:1px solid var(--border);border-radius:12px;cursor:pointer;
+        transition:background .2s;
+      }
+      .mob-menu-btn:hover{background:var(--blush);}
+      .mob-menu-btn span{
+        display:block;width:18px;height:2px;background:var(--brown);
+        border-radius:2px;transition:all .25s;
+      }
+      .mob-menu-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+      .mob-menu-btn.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+      .mob-menu-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+      /* Panier flottant mobile — pill en bas à droite */
+      .mob-cart-fab{
+        display:flex;
+        position:fixed;bottom:28px;right:20px;z-index:250;
+        background:var(--brown);color:var(--cream);
+        border:none;border-radius:40px;
+        padding:13px 20px;gap:10px;align-items:center;
+        font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+        cursor:pointer;box-shadow:0 4px 20px rgba(59,34,20,.28);
+        transition:background .2s,transform .15s;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .mob-cart-fab:hover,.mob-cart-fab:active{background:var(--caramel);transform:translateY(-2px);}
+      .mob-cart-fab svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+      .mob-cart-fab-badge{
+        background:var(--gold);color:var(--brown);font-size:12px;font-weight:700;
+        min-width:20px;height:20px;border-radius:20px;
+        display:flex;align-items:center;justify-content:center;padding:0 4px;
+        transform:scale(0);transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+      }
+      .mob-cart-fab-badge.visible{transform:scale(1);}
+      .mob-cart-fab-badge.bump{animation:bump .3s cubic-bezier(.34,1.56,.64,1);}
+
+      /* Reste du responsive */
+      .hero{padding:96px 20px 52px;grid-template-columns:1fr;}.hero-right{display:none;}
+      section{padding:64px 20px;}
       .about-grid{grid-template-columns:1fr;}.about-right{display:none;}
       .livraison-grid{grid-template-columns:1fr;}
       .footer-top{grid-template-columns:1fr 1fr;}
       .contact-wrap{grid-template-columns:1fr;gap:40px;}
       .form-row2,.delivery-options,.card-row{grid-template-columns:1fr;}
+      .cookies-grid{grid-template-columns:1fr 1fr;gap:12px;}
+      .cookie-card-top{padding:20px 16px 16px;}
+      .cookie-letter{font-size:36px;margin-bottom:10px;}
+      .cookie-name{font-size:16px;}
+      .cookie-desc{font-size:12px;}
+      .cookie-card-bot{padding:14px 16px;}
+      .cookie-price{font-size:16px;}
+      .add-btn{font-size:12px;padding:0 12px;height:34px;}
+      .card-qty{height:34px;}
+      .card-qty-btn{width:32px;height:32px;font-size:17px;}
+      .card-qty-num{font-size:13px;min-width:22px;}
     }
   </style>
 </head>
@@ -325,7 +416,7 @@
 
 <!-- NAVBAR -->
 <nav id="navbar">
-  <div class="nav-logo">Cookie<em>Drop</em></div>
+  <a class="nav-logo" href="#accueil" onclick="goTo('accueil');return false;">Cookie<em>Drop</em></a>
   <ul class="nav-links">
     <li><a href="#apropos">À propos</a></li>
     <li><a href="#cookies">Cookies</a></li>
@@ -338,9 +429,36 @@
       <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
       Panier
     </button>
-    <div class="cart-badge" id="cart-badge">0</div>
+
   </div>
+  <!-- Hamburger mobile -->
+  <button class="mob-menu-btn" id="mob-menu-btn" onclick="toggleMobMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- OVERLAY + DRAWER MOBILE -->
+<div class="mob-drawer-overlay" id="mob-drawer-overlay" onclick="closeMobMenu()"></div>
+<div class="mob-drawer" id="mob-drawer">
+  <div class="mob-drawer-links">
+    <a href="#apropos"   onclick="closeMobMenu()">À propos</a>
+    <a href="#cookies"   onclick="closeMobMenu()">Cookies</a>
+    <a href="#livraison" onclick="closeMobMenu()">Livraison</a>
+    <a href="#adresses"  onclick="closeMobMenu()">Adresses</a>
+    <a href="#contact"   onclick="closeMobMenu()">Contact</a>
+  </div>
+  <button class="mob-drawer-cart" onclick="closeMobMenu();openCart()">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    Voir mon panier
+  </button>
+</div>
+
+<!-- FAB PANIER MOBILE -->
+<button class="mob-cart-fab" id="mob-cart-fab" onclick="openCart()">
+  <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+  Panier
+  <div class="mob-cart-fab-badge" id="mob-badge"></div>
+</button>
 
 <!-- HERO -->
 <section class="hero" id="accueil">
@@ -403,7 +521,6 @@
     <h2 class="section-title">Nos <em>cookies</em></h2>
     <p class="section-sub">Chaque recette est imaginée pour créer une expérience unique</p>
   </div>
-  <div class="filter-bar reveal" id="filter-bar"></div>
   <div class="cookies-grid" id="cookies-grid"></div>
 </section>
 
@@ -458,7 +575,7 @@
 <footer>
   <div class="footer-top">
     <div>
-      <div class="footer-logo">Cookie<em>Drop</em></div>
+      <a class="footer-logo" href="#accueil" onclick="goTo('accueil');return false;">Cookie<em>Drop</em></a>
       <p class="footer-desc">Cookies artisanaux préparés avec passion chaque matin.</p>
       <div class="footer-social">
         <a class="social-link" href="#" target="_blank" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
@@ -641,17 +758,14 @@ const BACKEND_URL = "/.netlify/functions/create-payment"; // Netlify Function
 /* ══════════════════════════════════════════════════ */
 
 const COOKIES_DATA=[
-  {id:1,name:"Chocolat Noir",      desc:"Chocolat Valrhona 70%, fleur de sel de Guérande",       price:2.50,cat:"chocolat"},
-  {id:2,name:"Double Chocolat",    desc:"Pâte et pépites de chocolat au lait, cœur fondant",     price:2.80,cat:"chocolat"},
-  {id:3,name:"Praliné Noisette",   desc:"Praliné artisanal, éclats de noisettes du Piémont",     price:2.90,cat:"chocolat"},
-  {id:4,name:"Fraise & Vanille",   desc:"Confiture de fraise maison, vanille de Madagascar",     price:2.90,cat:"fruits"},
-  {id:5,name:"Citron Glacé",       desc:"Zeste de citron de Sicile, glaçage acidulé",            price:2.70,cat:"fruits"},
-  {id:6,name:"Myrtille & Citron",  desc:"Myrtilles fraîches, crème citronnée, sucre muscovado",  price:2.80,cat:"fruits"},
-  {id:7,name:"Matcha & Sésame",    desc:"Matcha bio du Japon, sésame noir torréfié, Dulcey",     price:3.10,cat:"speciaux"},
-  {id:8,name:"Beurre Cacahuète",   desc:"Peanut butter crunchy, caramel salé maison",            price:2.80,cat:"speciaux"},
-  {id:9,name:"Banoffee",           desc:"Dulcey Valrhona, banane, noix de pécan, muscade",       price:3.20,cat:"speciaux"},
+  {id:1,name:"The OG",        desc:"Pépite de chocolat au lait",                               price:2.50,cat:"classiques"},
+  {id:2,name:"Speculove",     desc:"Spéculoos & chocolat blanc",                               price:2.80,cat:"classiques"},
+  {id:3,name:"Red Cheese",    desc:"Red velvet & cream cheese",                                price:2.90,cat:"classiques"},
+  {id:4,name:"Macadamiam",    desc:"Chocolat blanc & macadamia",                               price:2.80,cat:"classiques"},
+  {id:5,name:"Big Peanut",    desc:"Beurre de cacahuètes & caramel beurre salé",               price:2.90,cat:"classiques"},
+  {id:6,name:"Brownie Boy",   desc:"Façon brownie chocolat noir",                              price:2.80,cat:"classiques"},
 ];
-const CATS=[{key:"tous",label:"Tous"},{key:"chocolat",label:"Chocolat"},{key:"fruits",label:"Fruits"},{key:"speciaux",label:"Spéciaux"}];
+
 const LIV_PRIX=4.90, LIV_SEUIL=35;
 
 let cart=[], deliveryMode="domicile";
@@ -661,9 +775,6 @@ let stripe=null, cardNumber=null, cardExpiry=null, cardCvc=null, stripeReady=fal
 (function(){const w=["Fait maison","Ingrédients premium","Livraison Paris","Click & Collect","Cuit chaque jour","Chocolat Valrhona"];let h="";for(let i=0;i<2;i++)w.forEach(x=>{h+=`<span class="ticker-item">${x}</span><span class="ticker-sep">◆</span>`;});document.getElementById("ticker-inner").innerHTML=h;})();
 
 /* ── FILTERS + COOKIES ── */
-document.getElementById("filter-bar").innerHTML=CATS.map(c=>`<button class="filter-btn${c.key==="tous"?" active":""}" onclick="setFilter('${c.key}',this)">${c.label}</button>`).join("");
-function setFilter(k,b){document.querySelectorAll(".filter-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderCookies(k);}
-
 function getQtyInCart(id){return cart.filter(c=>c.id===id).length;}
 
 function cardControlHTML(c, qty){
@@ -677,8 +788,8 @@ function cardControlHTML(c, qty){
   </div>`;
 }
 
-function renderCookies(f="tous"){
-  const d=f==="tous"?COOKIES_DATA:COOKIES_DATA.filter(c=>c.cat===f);
+function renderCookies(){
+  const d=COOKIES_DATA;
   document.getElementById("cookies-grid").innerHTML=d.map((c,i)=>{
     const qty=getQtyInCart(c.id);
     return `<div class="cookie-card reveal visible" style="transition-delay:${i*.05}s" id="cc-${c.id}">
@@ -710,16 +821,30 @@ function getGroupedCart(){
 
 function updateCartBadge(){
   const total=cart.length;
-  const badge=document.getElementById("cart-badge");
-  badge.textContent=total;
-  if(total>0){
-    badge.classList.add("visible");
-    badge.classList.remove("bump");
-    void badge.offsetWidth; // reflow pour reset animation
-    badge.classList.add("bump");
-  } else {
-    badge.classList.remove("visible");
+  // Mobile FAB badge
+  const mobBadge=document.getElementById("mob-badge");
+  if(mobBadge){
+    mobBadge.textContent=total;
+    if(total>0){mobBadge.classList.add("visible");mobBadge.classList.remove("bump");void mobBadge.offsetWidth;mobBadge.classList.add("bump");}
+    else{mobBadge.classList.remove("visible");}
   }
+}
+
+function toggleMobMenu(){
+  const btn=document.getElementById("mob-menu-btn");
+  const drawer=document.getElementById("mob-drawer");
+  const overlay=document.getElementById("mob-drawer-overlay");
+  const isOpen=drawer.classList.contains("open");
+  btn.classList.toggle("open",!isOpen);
+  drawer.classList.toggle("open",!isOpen);
+  overlay.classList.toggle("open",!isOpen);
+  document.body.style.overflow=isOpen?"":"hidden";
+}
+function closeMobMenu(){
+  document.getElementById("mob-menu-btn").classList.remove("open");
+  document.getElementById("mob-drawer").classList.remove("open");
+  document.getElementById("mob-drawer-overlay").classList.remove("open");
+  document.body.style.overflow="";
 }
 
 function addToCart(id){
